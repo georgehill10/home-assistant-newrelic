@@ -1,244 +1,102 @@
-# Home Assistant New Relic Addons Repository
+# New Relic Home Assistant Addons
 
-This repository contains Home Assistant addons for integrating New Relic monitoring into your Home Assistant instance.
+Monitor your applications and infrastructure with New Relic metrics in Home Assistant!
 
-## Addons
+## Add-ons
 
 ### New Relic Metrics
 
-Fetch metrics from New Relic using NRQL queries and add them as sensors to Home Assistant.
+Fetch metrics from New Relic using NRQL queries and display them as Home Assistant sensors.
 
 **Features:**
-- Query New Relic using NRQL (New Relic Query Language)
-- Automatically create Home Assistant sensors from query results
-- Configurable update intervals
-- Support for multiple queries
-- Custom units of measurement and icons
+- Execute any NRQL query against your New Relic account
+- Automatically create sensors in Home Assistant
+- Extract specific fields with `value_field` parameter
+- Round values with `decimal_places` parameter
+- Multiple queries support
+- Custom icons and units of measurement
 
-## Installation
+## Quick Start
 
-### Method 1: Add Repository to Home Assistant
+### Installation
 
-1. Navigate to **Supervisor** → **Add-on Store** in your Home Assistant instance
-2. Click the **⋮** (three dots) in the top right corner
-3. Select **Repositories**
-4. Add this repository URL:
-   ```
-   https://github.com/georgehill10/home-assistant-newrelic
-   ```
-5. Click **Add**
-6. Close the repositories dialog
-7. Scroll down to find "New Relic Metrics" addon
-8. Click on it and then click **Install**
+1. Navigate to **Supervisor** → **Add-on Store** in Home Assistant
+2. Click **⋮** (three dots) → **Repositories**
+3. Add: `https://github.com/georgehill10/home-assistant-newrelic`
+4. Find **New Relic Metrics** and click **Install**
 
-### Method 2: Manual Installation (Development)
-
-1. Copy the `newrelic-metrics` folder to your Home Assistant addons directory:
-   ```
-   /addons/newrelic-metrics/
-   ```
-2. Restart Home Assistant or reload addons
-3. Install the addon from the Supervisor panel
-
-## Configuration
-
-After installation, configure the addon with your New Relic credentials:
+### Configuration
 
 ```yaml
-api_key: "NRAK-XXXXXXXXXXXXXXXXXXXXXXXXXX"
-account_id: "1234567"
+api_key: "NRAK-your-newrelic-api-key"
+account_id: "your-account-id"
+ha_token: "your-home-assistant-token"
 update_interval: 300
 queries:
-  - name: "App Response Time"
-    nrql: "SELECT average(duration) FROM Transaction WHERE appName = 'MyApp' SINCE 5 minutes ago"
-    unit_of_measurement: "s"
-    icon: "mdi:timer"
-  - name: "Error Rate"
-    nrql: "SELECT percentage(count(*), WHERE error IS true) FROM Transaction WHERE appName = 'MyApp' SINCE 5 minutes ago"
+  - name: "Error Free Sessions"
+    nrql: "SELECT percentage(count(*), WHERE error IS NULL) as efs FROM PageView SINCE 1 hour ago"
+    value_field: "efs"
+    decimal_places: 2
     unit_of_measurement: "%"
-    icon: "mdi:alert-circle"
+    icon: "mdi:check-circle"
 ```
 
-See the [addon documentation](newrelic-metrics/DOCS.md) for detailed configuration options.
+See [Quick Start Guide](QUICKSTART.md) for detailed setup instructions.
 
-## Getting Your New Relic Credentials
+## Getting Credentials
 
-### API Key
+### New Relic API Key
 
 1. Log in to [New Relic](https://one.newrelic.com)
-2. Click on your account name in the top right
-3. Go to **API keys**
-4. Create a new **User** key (or use an existing one)
-5. Copy the key (starts with "NRAK-")
+2. Click your profile → **API keys**
+3. Create a new **User** key (starts with `NRAK-`)
 
-**Important:** Use a User API key, not a License key.
+### Home Assistant Token
 
-### Account ID
+1. Click your username in Home Assistant
+2. Scroll to **Long-Lived Access Tokens**
+3. **Create Token**
+4. Copy the token
 
-1. Log in to New Relic
-2. Your account ID is visible in the URL when viewing your account
-3. Or go to **Account Settings** to find it
+See [GET_HA_TOKEN.md](GET_HA_TOKEN.md) for detailed instructions.
 
-## Usage Examples
+## Documentation
 
-### Monitor Application Performance
+- [Quick Start Guide](QUICKSTART.md) - Get started in 5 minutes
+- [Configuration Guide](newrelic-metrics/DOCS.md) - Detailed configuration options
+- [Local Installation](INSTALL_LOCAL.md) - Install locally for development
+- [Token Setup](GET_HA_TOKEN.md) - How to create Home Assistant token
 
+## Example Queries
+
+### Application Monitoring
 ```yaml
-queries:
-  - name: "API Response Time"
-    nrql: "SELECT average(duration) FROM Transaction WHERE appName = 'MyAPI' SINCE 5 minutes ago"
-    unit_of_measurement: "s"
-    icon: "mdi:timer"
+- name: "Response Time"
+  nrql: "SELECT average(duration) FROM Transaction SINCE 5 minutes ago"
+  decimal_places: 3
+  unit_of_measurement: "s"
 ```
 
-### Monitor Infrastructure
-
+### Infrastructure Monitoring
 ```yaml
-queries:
-  - name: "Server CPU Usage"
-    nrql: "SELECT average(cpuPercent) FROM SystemSample WHERE hostname = 'myserver' SINCE 5 minutes ago"
-    unit_of_measurement: "%"
-    icon: "mdi:cpu-64-bit"
+- name: "CPU Usage"
+  nrql: "SELECT average(cpuPercent) FROM SystemSample SINCE 5 minutes ago"
+  decimal_places: 1
+  unit_of_measurement: "%"
 ```
 
-### Monitor Website Traffic
-
+### Custom Metrics
 ```yaml
-queries:
-  - name: "Active Users"
-    nrql: "SELECT uniqueCount(session) FROM PageView SINCE 1 hour ago"
-    icon: "mdi:account-multiple"
+- name: "Active Users"
+  nrql: "SELECT uniqueCount(userId) FROM PageView SINCE 1 hour ago"
 ```
-
-## Using Sensors in Home Assistant
-
-Once configured, sensors will be created with entity IDs like:
-- `sensor.newrelic_api_response_time`
-- `sensor.newrelic_server_cpu_usage`
-- `sensor.newrelic_active_users`
-
-### Example Automation
-
-```yaml
-automation:
-  - alias: "Alert on High Response Time"
-    trigger:
-      - platform: numeric_state
-        entity_id: sensor.newrelic_api_response_time
-        above: 2
-    action:
-      - service: notify.mobile_app
-        data:
-          message: "API response time is high: {{ states('sensor.newrelic_api_response_time') }}s"
-```
-
-### Example Dashboard Card
-
-```yaml
-type: entities
-title: New Relic Metrics
-entities:
-  - sensor.newrelic_api_response_time
-  - sensor.newrelic_error_rate
-  - sensor.newrelic_active_users
-```
-
-## NRQL Query Examples
-
-### APM (Application Performance Monitoring)
-
-```nrql
-# Average response time
-SELECT average(duration) FROM Transaction WHERE appName = 'MyApp' SINCE 5 minutes ago
-
-# Error percentage
-SELECT percentage(count(*), WHERE error IS true) FROM Transaction SINCE 5 minutes ago
-
-# Requests per minute
-SELECT rate(count(*), 1 minute) FROM Transaction SINCE 5 minutes ago
-
-# Slowest transactions
-SELECT max(duration) FROM Transaction SINCE 5 minutes ago
-```
-
-### Infrastructure
-
-```nrql
-# CPU usage
-SELECT average(cpuPercent) FROM SystemSample WHERE hostname = 'myserver' SINCE 5 minutes ago
-
-# Memory usage (GB)
-SELECT average(memoryUsedBytes) / 1024 / 1024 / 1024 FROM SystemSample SINCE 5 minutes ago
-
-# Disk usage percentage
-SELECT average(diskUsedPercent) FROM StorageSample WHERE mountPoint = '/' SINCE 5 minutes ago
-
-# Network throughput (Mbps)
-SELECT average(receiveBytesPerSecond) / 1024 / 1024 * 8 FROM NetworkSample SINCE 5 minutes ago
-```
-
-### Browser (Real User Monitoring)
-
-```nrql
-# Page load time
-SELECT average(duration) FROM PageView WHERE appName = 'MyWebsite' SINCE 10 minutes ago
-
-# Unique visitors
-SELECT uniqueCount(session) FROM PageView SINCE 1 hour ago
-
-# Page views
-SELECT count(*) FROM PageView SINCE 1 hour ago
-```
-
-### Synthetics
-
-```nrql
-# Uptime percentage
-SELECT percentage(count(*), WHERE result = 'SUCCESS') FROM SyntheticCheck SINCE 1 hour ago
-
-# Average check duration
-SELECT average(duration) FROM SyntheticCheck WHERE monitorName = 'MyMonitor' SINCE 1 hour ago
-```
-
-## Troubleshooting
-
-### Addon won't start
-
-Check the addon logs. Common issues:
-- Missing or invalid API key
-- Missing account ID
-- No queries configured
-
-### No sensors appearing
-
-1. Check addon logs for errors
-2. Verify NRQL queries work in New Relic's query builder
-3. Ensure the addon is running
-4. Wait for the first update cycle
-
-### Query errors
-
-- Test queries in New Relic first
-- Ensure aggregation functions return single values
-- Check time ranges with `SINCE` clauses
-- Verify data exists for your queries
 
 ## Support
 
-For issues, feature requests, or contributions:
-- Create an issue on GitHub
-- Check existing issues for solutions
-- Review the [addon documentation](newrelic-metrics/DOCS.md)
+- **Issues**: [GitHub Issues](https://github.com/georgehill10/home-assistant-newrelic/issues)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
-MIT License - See LICENSE file for details
-
-## Changelog
-
-### Version 1.0.0
-- Initial release
-- Support for NRQL queries
-- Automatic sensor creation
-- Configurable update intervals
-- Custom units and icons
+MIT License - See [LICENSE](LICENSE)
