@@ -1,0 +1,33 @@
+name: New Relic Metrics
+version: "1.0.0"
+slug: newrelic_metrics
+description: Fetch metrics from New Relic and add them as sensors to Home Assistant
+url: https://github.com/georgehill10/home-assistant-newrelic
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+hassio_api: true
+hassio_role: default
+homeassistant_api: true
+options:
+  api_key: ""
+  account_id: ""
+  ha_token: ""
+  queries: []
+  update_interval: 300
+schema:
+  api_key: password
+  account_id: str
+  ha_token: password
+  update_interval: int(1,86400)?
+  queries:
+    - name: str
+      nrql: str
+      value_field: str?
+      decimal_places: int?
+      unit_of_measurement: str?
+      icon: str?

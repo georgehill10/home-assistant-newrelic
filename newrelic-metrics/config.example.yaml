@@ -1,0 +1,67 @@
+# Example configuration for New Relic Metrics addon
+# Copy this to your addon configuration and update with your values
+
+api_key: "NRAK-XXXXXXXXXXXXXXXXXXXXXXXXXX"
+account_id: "1234567"
+ha_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ..."
+update_interval: 300
+
+queries:
+  # APM - Application Performance Monitoring
+  - name: "App Response Time"
+    nrql: "SELECT average(duration) as avg_duration FROM Transaction WHERE appName = 'YourAppName' SINCE 5 minutes ago"
+    value_field: "avg_duration"
+    decimal_places: 3
+    unit_of_measurement: "s"
+    icon: "mdi:timer"
+
+  - name: "App Error Rate"
+    nrql: "SELECT percentage(count(*), WHERE error IS true) as error_pct FROM Transaction WHERE appName = 'YourAppName' SINCE 5 minutes ago"
+    value_field: "error_pct"
+    decimal_places: 2
+    unit_of_measurement: "%"
+    icon: "mdi:alert-circle"
+
+  - name: "App Throughput"
+    nrql: "SELECT rate(count(*), 1 minute) as rpm FROM Transaction WHERE appName = 'YourAppName' SINCE 5 minutes ago"
+    value_field: "rpm"
+    decimal_places: 0
+    unit_of_measurement: "rpm"
+    icon: "mdi:gauge"
+
+  # Infrastructure - Server Monitoring
+  - name: "Server CPU"
+    nrql: "SELECT average(cpuPercent) FROM SystemSample WHERE hostname = 'your-server' SINCE 5 minutes ago"
+    unit_of_measurement: "%"
+    icon: "mdi:cpu-64-bit"
+
+  - name: "Server Memory"
+    nrql: "SELECT average(memoryUsedPercent) FROM SystemSample WHERE hostname = 'your-server' SINCE 5 minutes ago"
+    unit_of_measurement: "%"
+    icon: "mdi:memory"
+
+  - name: "Disk Usage"
+    nrql: "SELECT average(diskUsedPercent) FROM StorageSample WHERE hostname = 'your-server' AND mountPoint = '/' SINCE 5 minutes ago"
+    unit_of_measurement: "%"
+    icon: "mdi:harddisk"
+
+  # Browser - Real User Monitoring
+  - name: "Page Load Time"
+    nrql: "SELECT average(duration) FROM PageView WHERE appName = 'YourWebsite' SINCE 10 minutes ago"
+    unit_of_measurement: "s"
+    icon: "mdi:web"
+
+  - name: "Active Users"
+    nrql: "SELECT uniqueCount(session) FROM PageView SINCE 1 hour ago"
+    icon: "mdi:account-multiple"
+
+  # Synthetics - Synthetic Monitoring
+  - name: "Uptime Percentage"
+    nrql: "SELECT percentage(count(*), WHERE result = 'SUCCESS') FROM SyntheticCheck WHERE monitorName = 'YourMonitor' SINCE 1 hour ago"
+    unit_of_measurement: "%"
+    icon: "mdi:check-network"
+
+  # Custom Metrics
+  - name: "Custom Event Count"
+    nrql: "SELECT count(*) FROM CustomEvent WHERE eventType = 'YourEventType' SINCE 5 minutes ago"
+    icon: "mdi:counter"
